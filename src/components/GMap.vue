@@ -3,6 +3,7 @@
     <section id="container" class="m-style"></section>
     <button @click="handleSave">保存</button>
     <button @click="handleClear">清除</button>
+    <button @click="handleWatch">编辑</button>
   </div>
 </template>
 <script>
@@ -72,14 +73,25 @@ export default {
         console.error(err);
       }
     },
+    handleWatch() {
+      this.mapData.lng = 103.856516;
+      this.mapData.lat = 36.046381;
+      this.mapData.radius = 200;
+      this.$nextTick(() => {
+        this.editMap();
+      })
+    },
     mapClick(e) {
-      // console.log(e);
-      // console.log(this.mapData);
       if (this.mapData.lat !== 0) return alert('已绘制打卡位置!');
       this.mapData.lng = e.lnglat.lng;
       this.mapData.lat = e.lnglat.lat;
+      this.$nextTick(() => {
+        this.editMap();
+      });
+    },
+    editMap() {
       this.circle = new this.resMap.Circle({
-        center: [e.lnglat.lng, e.lnglat.lat],
+        center: [this.mapData.lng, this.mapData.lat],
         radius: this.mapData.radius, //半径
         borderWeight: 3,
         strokeColor: '#3498db',
@@ -92,10 +104,11 @@ export default {
         zIndex: 50,
       });
       // this.circle.setMap(this.map);
+      // this.map.add(circle);
+
       // 缩放地图到合适的视野级别
       this.map.add(this.circle);
       this.map.setFitView([this.circle]);
-      // this.map.add(circle);
       let _that = this;
       _that.resMap.plugin(['AMap.CircleEditor'], function() {
         _that.circleEditor = new _that.resMap.CircleEditor(
@@ -142,8 +155,8 @@ export default {
       this.newMapData = {
         radius: 0,
         lat: 0,
-        lng: 0
-      }
+        lng: 0,
+      };
     },
   },
 };
