@@ -139,6 +139,11 @@ export default {
       this.circleEditor.close();
       this.map.clearMap();
       this.mapData.lat = 0;
+      this.newMapData = {
+        radius: 0,
+        lat: 0,
+        lng: 0
+      }
     },
   },
 };
