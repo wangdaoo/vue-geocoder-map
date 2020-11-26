@@ -1,65 +1,117 @@
 <template>
-  <section id="map" class="m-style"></section>
+  <div>
+    <section id="container" class="m-style"></section>
+    <button @click="handleSave">保存</button>
+    <button @click="handleClear">清除</button>
+    <!-- <button @click="handleWatch">编辑</button> -->
+  </div>
 </template>
 <script>
 /**
  * @author 🌈MARS <wangdaoo@yeah.net>
- * @desc 📝MAP
+ * @desc 📝原生地图
  * @copyright 🤝In me the tiger sniffs the rose.
  */
 import AMap from '../utils/AMap';
 export default {
-  name: 'TMap',
+  name: 'GMap',
   data() {
     return {
-      MAP: {},
+      map: null,
       resMap: {},
+      /** 圆 */
+      mapPath: [],
+      /** 地图标注 */
+      mapData: {
+        /** 经度 */
+        lng: 0,
+        /** 纬度 */
+        lat: 0,
+        /** 半径 */
+        radius: 500,
+      },
+      newMapData: {
+        lng: 0,
+        lat: 0,
+        radius: 0,
+      },
+      polygon: {},
+      mouse: {},
     };
   },
 
   mounted() {
-    this.$nextTick(() => {
-      this.initMap();
-    });
+    this.initAMap();
+    let data = JSON.parse(
+      '[[[103.812742,36.061925],[103.809052,36.049643],[103.843384,36.050128],[103.836088,36.065324]],[[103.796091,36.066851],[103.785448,36.050406],[103.804331,36.046797],[103.807163,36.07025]]]'
+    );
+    console.log(data);
+    this.mapPath = data;
+    setTimeout(() => {
+      this.edit();
+    }, 1000);
   },
 
   methods: {
-    async initMap() {
-      this.resMap = await AMap();
-      setTimeout(() => {
-        //一秒延迟，等待脚本加载
-        // let that = this;
-        let map = new this.resMap.Map('map', {
-          zoom: 13, //级别
-          // center: [117.226737, 31.820066], //中心点坐标
-          pitch: 30, // 地图俯仰角度，有效范围 0 度- 83 度
-          viewMode: '2D', // 地图模式
+    async initAMap() {
+      let _this = this;
+      try {
+        _this.resMap = await AMap();
+        this.map = new _this.resMap.Map('container', {
+          resizeEnable: true, //是否监控地图容器尺寸变化
+          zoom: 14, //初始化地图层级
+          zoomEnable: true, // 是否缩放
+          scrollWheel: true, // 是否支持滚轮缩放
+          dragEnable: true, // 是否支持鼠标拖拽平移
+          jogEnable: true, // 是否支持缓动效果
+          pitch: 30,
+          buildingAnimation: true, // 模块消失是否有动画效果
+          // center: [116.397428, 39.90923], //初始化地图中心点
         });
-        let _that = this
-        _that.resMap.plugin(
-          [
-            'AMap.InfoWindow',
-            'AMap.ContextMenu',
-            'AMap.Heatmap',
-            'AMap.MouseTool',
-            'AMap.RangingTool',
-            'AMap.CircleEditor',
-            'AMap.PolyEditor',
-            'AMap.ToolBar',
-            'AMap.Scale',
-            'AMap.OverView',
-            'AMap.MapType',
-            'AMap.Geolocation',
-          ],
+        _this.resMap.plugin(
+          ['AMap.ToolBar', 'AMap.MapType', 'AMap.MouseTool'],
           function() {
-            //插件引入回调事件，可添加工具控件，也可创建插件实例
-            map.addControl(new _that.resMap.ToolBar({ position: 'RT' })); // 在图面添加比例尺控件，展示地图在当前层级和纬度下的比例尺
-            map.addControl(new _that.resMap.Scale()); // 在图面添加鹰眼控件，在地图右下角显示地图的缩略图
-            map.addControl(new _that.resMap.OverView({ isOpen: true })); // 在图面添加类别切换控件，实现默认图层与卫星图、实施交通图层之间切换的控制
+            _this.map.addControl(new _this.resMap.ToolBar());
+            _this.map.addControl(new _this.resMap.MapType());
+
+            _this.mouse = new _this.resMap.MouseTool(_this.map);
+            _this.mouse.polygon();
+            _this.mouse.on('draw', function(e) {
+              console.log(e.obj.getPath());
+              _this.mapPath.push(e.obj.getPath());
+              // _this.edit();
+            });
           }
         );
-        _that.MAP = map; //将map挂载到组件data，后续交互需要用到
-      }, 1000);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    edit() {
+      this.polygon = new this.resMap.Polygon({
+        path: this.mapPath,
+        borderWeight: 3,
+        strokeColor: '#3498db',
+        strokeOpacity: 1,
+        strokeWeight: 2,
+        fillOpacity: 0.4,
+        strokeDasharray: [10, 10],
+        fillColor: '#1791fc',
+        zIndex: 50,
+      });
+      this.map.add(this.polygon);
+      this.map.setFitView([this.polygon]);
+    },
+    handleSave() {
+      console.log('%c' + 'save', 'color: #2ecc71; font-size: 13px;');
+      console.log(JSON.stringify(this.mapPath));
+    },
+    handleClear() {
+      this.mouse.close();
+      this.map.clearMap();
+      this.mapPath = [];
+
+      this.initAMap();
     },
   },
 };

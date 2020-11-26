@@ -1,18 +1,18 @@
 <template>
   <div id="app">
-    <GMap />
+    <TMap />
   </div>
 </template>
 
 <script>
 // import VMap from './components/VMap'
-import GMap from './components/GMap';
-// import TMap from './components/TMap';
+// import GMap from './components/GMap';
+import TMap from './components/TMap';
 
 export default {
   name: 'App',
   components: {
-    GMap,
+    TMap,
   },
 };
 </script>
